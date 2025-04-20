@@ -1,9 +1,10 @@
 # 概要
 
-- 初心者が、ローカル環境で`Google ADK`を使って AI エージェント構築をする記事です
+- 初心者が`Google ADK`を使って AI エージェント構築をする記事です
   - `ADK`：google が開発した AI エージェントフレームワーク
-      - 参考：[Qiita | 🤖 Google Agent Development Kit (ADK) 入門ガイド](https://qiita.com/okikusan-public/items/9f351edda089f431ed26)
-- 本記事では、ブラウザ上でエージェントと対話し、単純な python スクリプトを実行してもらうところまでやります
+    - 参考：[Qiita | 🤖 Google Agent Development Kit (ADK) 入門ガイド](https://qiita.com/okikusan-public/items/9f351edda089f431ed26)
+- 本記事では、ブラウザ上でエージェントと対話し、以下ができるところまでやります - 入力->エージェント A->スクリプト i->エージェント B->出力
+  ![Drawing 2025-04-20 01.22.59.excalidraw.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/706e1a29-c39c-4e2b-8995-75aa14040de8.png)
 
 # 環境構築
 
@@ -19,8 +20,8 @@ ollama pull gemma3
 ollama pull mistral-small3.1
 ```
 
-    - 本記事で使うのは、基本的に上記２モデルです
-    - 興味がある人は、[Ollama | Models](https://ollama.com/search)から好きなモデルを選んで動かしてみてください
+- 本記事で使うのは、基本的に上記２モデルです
+- 興味がある人は、[Ollama | Models](https://ollama.com/search)から好きなモデルを選んで動かしてみてください
 
 #### 2. AI を走らせてみよう
 
@@ -56,7 +57,9 @@ uv pip install google-adk litellm
 # エージェントを構築しよう
 
 - ここからコードを書くよ！
+
 ## 1. 簡単な対話エージェントを構築してみよう
+
 ### ディレクトリ構成
 
 ```
@@ -107,12 +110,14 @@ root_agent = LlmAgent(
 - `localhost:8000`（デフォルト）にブラウザからアクセスすると、エージェントがいるはず！とりあえず動きました！🎉
   ![スクリーンショット 2025-04-19 203024.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/db642dee-ef23-4c48-9dd2-618833d4973a.png)
 
-## 2. AIにpythonスクリプトを実行してもらおう
-- `tools`として、AIにpythonスクリプトを渡します
-- `tool`の説明は丁寧に書こう！I/Oの形式まで書けるとGood
+## 2. AI に python スクリプトを実行してもらおう
+
+- `tools`として、AI に python スクリプトを渡します
+- `tool`の説明は丁寧に書こう！I/O の形式まで書けると Good
 - 参考：[Agent Development Kit | Function tools](https://google.github.io/adk-docs/tools/function-tools/)
 
 ### ディレクトリ構成
+
 ```
 .
 ├── die_agent
@@ -127,7 +132,9 @@ root_agent = LlmAgent(
 ├── pyproject.toml
 └── uv.lock
 ```
+
 ### コード
+
 ```python:agent.py
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
@@ -144,6 +151,7 @@ root_agent = LlmAgent(
     ],
 )
 ```
+
 ```python:tools/roll_die.py
 import random
 
@@ -160,18 +168,24 @@ def roll_die():
         "status": "success",
     }
 ```
+
 - コードが書けたら、`uv run adk web`をして、`localhost:8000`にアクセス！動きましたか？
-![スクリーンショット 2025-04-19 234336.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/e31b2683-92df-4510-a563-f5f192ad8e4e.png)
+  ![スクリーンショット 2025-04-19 234336.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/e31b2683-92df-4510-a563-f5f192ad8e4e.png)
+
 ## 3. マルチエージェントにしてみよう
-- いよいよマルチエージェント！エージェントAのダイスの結果を使って、エージェントBにおみくじをひいてもらいます
+
+- いよいよマルチエージェント！エージェント A のダイスの結果を使って、エージェント B におみくじをひいてもらいます
 - 増える概念：
-  - `output_key`：各エージェントの出力は、contextにキーバリューで保存されます。そのkeyを指定する
+  - `output_key`：各エージェントの出力は、context にキーバリューで保存されます。その key を指定する
   - `Sequential agents`：サブエージェントに登録したエージェントを、順番に呼び出してくれる
 - 注釈：
-  - うちのPCが悲鳴をあげたので、この項ではモデルをgeminiにしました
+  - うちの PC が悲鳴をあげたので、この項ではモデルを gemini にしました
+  - gemini を使う場合、`.env`には以下が必要。`AI Studio`で無料発行できます
+    - `GOOGLE_API_KEY="XXX"`
 - 参考：[Agent Development Kit | Sequential agents](https://google.github.io/adk-docs/agents/workflow-agents/sequential-agents/)
 
 ### ディレクトリ構成
+
 ```
 .
 ├── README.md
@@ -202,6 +216,7 @@ root_agent = SequentialAgent(
     sub_agents=[die_agent, omikuji_agent],
 )
 ```
+
 ```python:omikuji_agent/agents/die_agent.py
 from google.adk.agents import LlmAgent
 from omikuji_agent.tools.roll_die import roll_die
@@ -283,11 +298,12 @@ def omikuji(id: int):
         "status": "success",
     }
 ```
-- コードが書けたら、`uv run adk web`をして、`localhost:8000`にアクセス！動いたらOK！
-![スクリーンショット 2025-04-20 003927.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/dc5a6425-e4af-4a19-9932-ec46461cb6a2.png)
 
+- コードが書けたら、`uv run adk web`をして、`localhost:8000`にアクセス！動いたら OK！
+  ![スクリーンショット 2025-04-20 003927.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3298811/dc5a6425-e4af-4a19-9932-ec46461cb6a2.png)
 
 # まとめ
+
 - 短いコードでエーアイが動いて嬉しい！
-- 次はMCPサーバとかで色々動かす記事を書こうと思う
+- 次は MCP サーバとかで色々動かす記事を書こうと思う
 - 不足や誤りを発見しましたら、ご指摘いただけると助かります。
